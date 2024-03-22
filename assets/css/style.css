@@ -14,3 +14,7 @@ body {
 .task-card:hover {
   cursor: grab;
 }
+
+.card-size {
+  max-width: 18rem;
+}
