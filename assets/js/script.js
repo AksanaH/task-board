@@ -1,30 +1,22 @@
 // Retrieve tasks and nextId from localStorage
-let taskList = JSON.parse(localStorage.getItem("tasks"));
-let nextId = JSON.parse(localStorage.getItem("nextId"));
 const titleInput = $('#tasktitle');
 const dateInput = $('#datepicker');
 const descriptionInput = $('#taskdescription');
-const taskToDo = document.querySelector("#todo-cards");
-const taskInProgress = document.querySelector("#in-progress-cards");
+const taskToDo = document.querySelector("#sortable1");
+const taskInProgress = document.querySelector("#sortable2");
+const taskDone = document.querySelector("#sortable3");
 const addTaskButton = document.querySelector("#add-task");
-
+const statusToDo = "TO_DO";
+const statusInProgress = "IN_PROGRESS";
+const statusDone = "DONE";
+const deleteTaskButton = document.querySelector(".delete");
 // const tasks = [];
 // Todo: create a function to generate a unique task id
 function generateTaskId() {
 
     // Increment nextId for the new task
-    let taskId = nextId;
     //add unix time to avoid duplicates of random numbers
-    const index = Math.floor(Math.random() * 100) + 1 + dayjs().unix();
-    // // Update nextId for future tasks
-    // nextId++;
-
-    // // Save the updated nextId to localStorage
-    // localStorage.setItem("nextId", JSON.stringify(nextId));
-
-    // Return the generated taskId
-    return index;
-
+    return Math.floor(Math.random() * 100) + 1 + dayjs().unix();
 }
 
 
@@ -42,34 +34,31 @@ function createTaskCard(task) {
     console.log(task);
     renderTaskList(task);
 }
-// console.log(createTaskCard({
-//     title: "sfsf",
-//     date: "122111",
-//     descrition: "descriptionInput.value",
-//   }));
 
 // Todo: create a function to render the task list and make cards draggable
 function renderTaskList() {
     const tasks = JSON.parse(localStorage.getItem("tasks"));
-    if (tasks===null){
+
+    if (tasks === null) {
         return
     }
+    taskToDo.innerHTML = null;
+    taskInProgress.innerHTML = null;
+    taskDone.innerHTML = null;
+
     for (let i = 0; i < tasks.length; i++) {
         const currentTask = tasks[i];
 
 
         const newSection = document.createElement("div");
-        // newSection.setAttribute('id', 'draggable')
         newSection.classList.add("draggable");
         newSection.classList.add("card");
         newSection.classList.add("text-white");
-        newSection.classList.add("bg-danger");
+        // newSection.classList.add("bg-danger");
         newSection.classList.add("mb-3");
         newSection.classList.add("card-size");
-        newSection.setAttribute("card-id",currentTask.id);
-        // <div card-id="currentTask.id"></div> 
-        // document.getElementById(".draggable").style.maxWidth="18rem";
-        
+        newSection.setAttribute("card-id", currentTask.id);
+
 
 
         const cardHeader = document.createElement("div");
@@ -79,7 +68,6 @@ function renderTaskList() {
 
         const cardBody = document.createElement("div");
         cardBody.classList.add("card-body");
-        // cardBody.textContent = currentTask.datepicker;
         newSection.append(cardBody);
 
 
@@ -94,38 +82,25 @@ function renderTaskList() {
         cardBody.append(description);
 
         const buttonDelete = document.createElement("button");
+        
         buttonDelete.textContent = "Delete";
+        buttonDelete.classList.add("delete");
         cardBody.append(buttonDelete);
 
-        
-        const a =  Math.floor(Math.random()*2);
-        if (a===0){
+        if (currentTask.status === statusToDo){
+            newSection.classList.add("bg-danger");
+            taskToDo.append(newSection);
+            
+        } else if (currentTask.status === statusInProgress){
+            newSection.classList.add("bg-success");
             taskInProgress.append(newSection);
         } else {
-            taskToDo.append(newSection);
+            newSection.classList.add("bg-secondary");
+            taskDone.append(newSection);
         }
-        
-        /*
-        <div id ="draggable" class="card text-white bg-danger mb-3" style="max-width: 18rem;">
-            <div class="card-header">Header</div>
-            <div class="card-body">
-                <h5 class="card-title">Danger card title</h5>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-            </div>
-            </div>
-            */
-
-            // $(function () {
-            //     $(".draggable").draggable();
-            // });
-            // $( function() {
-            //     $( ".draggable" ).draggable({ revert: true });
-            //     // $( "#draggable2" ).draggable({ revert: true, helper: "clone" });
-            //   } );
-            
 
     }
-    
+
 }
 
 
@@ -138,10 +113,10 @@ function handleAddTask(event) {
         date: dateInput.val(),
         description: descriptionInput.val(),
         id: generateTaskId(),
-        status: "TO_DO"
+        status: statusToDo,
     }
-    // console.log(createTaskCard(task));
-    // $('#formModal').modal('hide')
+    createTaskCard(task);
+    $('#formModal').modal('hide')
 
 }
 
@@ -149,14 +124,37 @@ function handleAddTask(event) {
 // Todo: create a function to handle deleting a task
 function handleDeleteTask(event) {
     event.preventDefault();
+    const tasks = JSON.parse(localStorage.getItem("tasks"));
+
 }
 
 // Todo: create a function to handle dropping a task into a new status lane
 function handleDrop(event, ui) {
-    let destination = ui.item[0].offsetParent.id; 
+    let destination = ui.item[0].offsetParent.id;
     let taskId = ui.item[0].attributes["card-id"].value;
-   // Access the dragged task element
-    console.log(draggedTask.title());
+    // Access the dragged task element
+
+    let taskArray = updateTaskStatusById(parseInt(taskId),destination);
+    localStorage.setItem("tasks", JSON.stringify(taskArray));
+   
+}
+
+function updateTaskStatusById(id, destination) {
+    const tasks = JSON.parse(localStorage.getItem("tasks"));
+
+    for (let i = 0; i < tasks.length; i++) {
+        if (tasks[i].id === id) {   
+            if (destination === "done") {
+                tasks[i].status = statusDone;
+            } else if (destination ==="in-progress") {
+                tasks[i].status = statusInProgress;
+            }
+            else {
+                tasks[i].status = statusToDo;
+            }
+            return tasks; 
+        }
+    }
 }
 
 // Todo: when the page loads, render the task list, 
@@ -164,7 +162,6 @@ function handleDrop(event, ui) {
 //the due date field a date picker
 addTaskButton.addEventListener("click", handleAddTask);
 
-console.log(generateTaskId());
 
 $(document).ready(function () {
     $(function () {
@@ -176,14 +173,16 @@ $(document).ready(function () {
 });
 
 renderTaskList();
-$( function() {
-    $( "#sortable1, #sortable2, #sortable3" ).sortable({
-      connectWith: ".connectedSortable",
-      items: ".draggable",
-      update: function(event, ui) {
-        handleDrop(event, ui)
-      }
+
+$(function () {
+    $("#sortable1, #sortable2, #sortable3").sortable({
+        connectWith: ".connectedSortable",
+        items: ".draggable",
+        remove: function (event, ui) {
+            handleDrop(event, ui);
+            renderTaskList();
+        }
     }).disableSelection();
-    
-  } );
+
+});
 
