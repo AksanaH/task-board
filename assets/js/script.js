@@ -9,8 +9,9 @@ const addTaskButton = document.querySelector("#add-task");
 const statusToDo = "TO_DO";
 const statusInProgress = "IN_PROGRESS";
 const statusDone = "DONE";
-const deleteTaskButton = document.querySelector(".delete");
-// const tasks = [];
+const closeButton = document.querySelector(".close");
+
+
 // Todo: create a function to generate a unique task id
 function generateTaskId() {
 
@@ -53,7 +54,7 @@ function renderTaskList() {
         const newSection = document.createElement("div");
         newSection.classList.add("draggable");
         newSection.classList.add("card");
-        newSection.classList.add("text-white");
+        
         // newSection.classList.add("bg-danger");
         newSection.classList.add("mb-3");
         newSection.classList.add("card-size");
@@ -88,22 +89,38 @@ function renderTaskList() {
         cardBody.append(buttonDelete);
 
         if (currentTask.status === statusToDo){
-            newSection.classList.add("bg-danger");
+            // newSection.classList.add("bg-danger");
             taskToDo.append(newSection);
             
         } else if (currentTask.status === statusInProgress){
-            newSection.classList.add("bg-success");
+            // newSection.classList.add("bg-success");
             taskInProgress.append(newSection);
         } else {
-            newSection.classList.add("bg-secondary");
+            newSection.classList.add("bg-light");
+            newSection.classList.add("text-dark");
             taskDone.append(newSection);
         }
 
+        if (currentTask.status !== statusDone) {
+            const targetDay = dayjs(currentTask.date);
+            const today = dayjs();
+            const days = targetDay.diff(today, 'days');
+            console.log(days);
+            if (days<0) {
+                newSection.classList.add("bg-danger");
+                newSection.classList.add("text-white");
+            } else if (days===0) {
+                newSection.classList.add("bg-warning");
+                newSection.classList.add("text-white");
+            } else {
+                newSection.classList.add("bg-light");
+                newSection.classList.add("text-dark");
+            }
+        }
+        buttonDelete.addEventListener("click", handleDeleteTask);
     }
-
+    
 }
-
-
 
 // Todo: create a function to handle adding a new task
 function handleAddTask(event) {
@@ -124,8 +141,22 @@ function handleAddTask(event) {
 // Todo: create a function to handle deleting a task
 function handleDeleteTask(event) {
     event.preventDefault();
+    let taskId = parseInt(event.currentTarget.offsetParent.attributes["card-id"].value);
     const tasks = JSON.parse(localStorage.getItem("tasks"));
+    
+    for (let i =0; i<tasks.length; i++) {
+        
+        if (tasks[i].id === taskId) {
 
+            tasks.splice(i, 1);
+            break
+        } 
+        
+    }
+ 
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+    renderTaskList();
+    
 }
 
 // Todo: create a function to handle dropping a task into a new status lane
@@ -157,11 +188,16 @@ function updateTaskStatusById(id, destination) {
     }
 }
 
+function handleCloseModal (event) {
+    event.preventDefault();
+    $('#formModal').modal('hide')
+}
+
 // Todo: when the page loads, render the task list, 
 //add event listeners, make lanes droppable, and make 
 //the due date field a date picker
 addTaskButton.addEventListener("click", handleAddTask);
-
+closeButton.addEventListener("click", handleCloseModal);
 
 $(document).ready(function () {
     $(function () {
